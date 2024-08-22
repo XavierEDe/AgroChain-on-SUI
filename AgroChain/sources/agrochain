@@ -1,0 +1,91 @@
+module AgroChain::agroChain {
+
+    use sui::object::{Self, UID};
+    use sui::table;
+    use sui::clock;
+    use sui::transfer;
+    use std::vector;
+
+    // Agricultural product
+    struct Product has key {
+        id: UID,
+        farmer: address,
+        origin: vector<u8>,
+        quality: vector<u8>,
+        certification: vector<u8>,
+        status: vector<u8>,
+        updates: vector<ProductUpdate>,
+    }
+
+    // Product's journey
+    struct ProductUpdate has store {
+        timestamp: u64,
+        location: vector<u8>,
+        condition: vector<u8>,
+    }
+
+    // Registered products
+    struct ProductRegistry has key {
+        id: UID,
+        products: table::Table<UID, Product>,
+    }
+
+    // Initialize the product registry
+    public entry fun initialize_registry(account: &signer) {
+        let registry = ProductRegistry {
+            id: object::new<UID>(account),
+            products: table::Table::new(),
+        };
+        transfer::move_to(account, registry);
+    }
+
+    // Register a new product
+    public entry fun register_product(
+        registry: &mut ProductRegistry,
+        farmer: address,
+        origin: vector<u8>,
+        quality: vector<u8>,
+        certification: vector<u8>,
+        initial_status: vector<u8>,
+        account: &signer,
+    ) {
+        let product = Product {
+            id: object::new<UID>(account),
+            farmer,
+            origin,
+            quality,
+            certification,
+            status: initial_status,
+            updates: vector::empty(),
+        };
+        table::add(&mut registry.products, product.id, product);
+    }
+
+    // Update product status and conditions
+    public entry fun update_product(
+        registry: &mut ProductRegistry,
+        product_id: UID,
+        location: vector<u8>,
+        condition: vector<u8>,
+        new_status: vector<u8>,
+        account: &signer,
+    ) {
+        let timestamp = clock::now();
+        let update = ProductUpdate {
+            timestamp,
+            location,
+            condition,
+        };
+        let product = table::borrow_mut(&mut registry.products, product_id);
+        vector::push_back(&mut product.updates, update);
+        product.status = new_status;
+    }
+
+    // et the product details and updates
+    public fun get_product(
+        registry: &ProductRegistry,
+        product_id: UID,
+    ): &Product {
+        table::borrow(&registry.products, product_id)
+    }
+}

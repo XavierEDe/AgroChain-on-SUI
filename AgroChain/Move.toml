@@ -1,0 +1,16 @@
+[package]
+name = "AgroChain"
+version = "0.0.1"
+authors = ["Xavier"]
+license = "Apache-2.0"
+
+[dependencies]
+Sui = { git = "https://github.com/MystenLabs/sui.git", subdir = "crates/sui-framework/packages/sui-framework", rev = "framework/testnet" }
+
+[addresses]
+AgroChain = "0x1"
+
+
+[dev-addresses]
+
+
